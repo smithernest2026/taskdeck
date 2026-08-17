@@ -3,14 +3,19 @@ import Header from '../components/Header';
 import TaskTable from '../components/TaskTable';
 import BulkActionsBar from '../components/BulkActionsBar';
 import EmptyState from '../components/EmptyState';
+import Button from '../components/Button';
+import Modal from '../components/Modal';
+import TaskForm, { type TaskFormValues } from '../components/TaskForm';
 import { useStore } from '../store/StoreContext';
 import { useTaskQuery } from '../hooks/useTaskQuery';
+import { createId } from '../lib/id';
 import './TasksPage.css';
 
 export default function TasksPage() {
   const { state, dispatch } = useStore();
   const { query, setQuery, results, isLoading } = useTaskQuery(state.tasks);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isCreating, setIsCreating] = useState(false);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -46,12 +51,37 @@ export default function TasksPage() {
     clearSelection();
   }, [selectedIds, dispatch, clearSelection]);
 
+  const createTask = useCallback(
+    (values: TaskFormValues) => {
+      const now = new Date().toISOString();
+      dispatch({
+        type: 'ADD_TASK',
+        task: {
+          id: createId('task'),
+          ...values,
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+      setIsCreating(false);
+    },
+    [dispatch]
+  );
+
   const countLabel = `${results.length} task${results.length === 1 ? '' : 's'}`;
   const statusText = isLoading ? 'Searching…' : countLabel;
 
   return (
     <>
-      <Header title="Tasks" description="Track and manage your tasks." />
+      <Header
+        title="Tasks"
+        description="Track and manage your tasks."
+        actions={
+          <Button variant="primary" onClick={() => setIsCreating(true)}>
+            New task
+          </Button>
+        }
+      />
 
       <div className="tasks__toolbar">
         <label className="tasks__search">
@@ -94,6 +124,17 @@ export default function TasksPage() {
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
         />
+      )}
+
+      {isCreating && (
+        <Modal title="New task" onClose={() => setIsCreating(false)}>
+          <TaskForm
+            projects={state.projects}
+            submitLabel="Create task"
+            onSubmit={createTask}
+            onCancel={() => setIsCreating(false)}
+          />
+        </Modal>
       )}
     </>
   );
