@@ -22,7 +22,11 @@ export function reducer(state: AppState, action: Action): AppState {
         ...state,
         tasks: state.tasks.map((task) =>
           task.id === action.id
-            ? { ...task, ...action.changes, updatedAt: new Date().toISOString() }
+            ? {
+                ...task,
+                ...action.changes,
+                updatedAt: new Date().toISOString(),
+              }
             : task
         ),
       };

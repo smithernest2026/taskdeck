@@ -19,7 +19,9 @@ export default function Sidebar() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                isActive ? 'sidebar__link sidebar__link--active' : 'sidebar__link'
+                isActive
+                  ? 'sidebar__link sidebar__link--active'
+                  : 'sidebar__link'
               }
             >
               {item.label}

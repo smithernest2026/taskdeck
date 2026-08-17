@@ -22,7 +22,9 @@ const tasks = [
 
 describe('queryTasks', () => {
   it('returns all tasks for an empty query', async () => {
-    await expect(queryTasks(tasks, '', { delayMs: 0 })).resolves.toHaveLength(3);
+    await expect(queryTasks(tasks, '', { delayMs: 0 })).resolves.toHaveLength(
+      3
+    );
   });
 
   it('filters by title case-insensitively', async () => {

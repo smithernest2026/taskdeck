@@ -16,9 +16,7 @@ export default function BulkActionsBar({
 }: BulkActionsBarProps) {
   return (
     <div className="bulk-bar" role="region" aria-label="Bulk actions">
-      <span className="bulk-bar__count">
-        {count} selected
-      </span>
+      <span className="bulk-bar__count">{count} selected</span>
       <div className="bulk-bar__actions">
         <Button size="sm" onClick={onMarkDone}>
           Mark as done

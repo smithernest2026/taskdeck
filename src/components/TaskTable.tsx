@@ -10,6 +10,7 @@ interface TaskTableProps {
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: (ids: string[], select: boolean) => void;
+  pageSize?: number;
 }
 
 type SortColumn = 'title' | 'status' | 'priority' | 'dueDate';
@@ -48,9 +49,11 @@ export default function TaskTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  pageSize = 6,
 }: TaskTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('dueDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [page, setPage] = useState(0);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const projectsById = useMemo(() => {
@@ -64,11 +67,24 @@ export default function TaskTable({
     return [...tasks].sort((a, b) => compare(a, b, sortColumn) * factor);
   }, [tasks, sortColumn, sortDirection]);
 
-  const selectedVisible = sortedTasks.filter((task) =>
+  const pageCount = Math.max(1, Math.ceil(sortedTasks.length / pageSize));
+  // Clamp the page so filtering to fewer results never leaves us past the end.
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageTasks = sortedTasks.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize
+  );
+
+  // Reset to the first page whenever the underlying result set changes.
+  useEffect(() => {
+    setPage(0);
+  }, [tasks, sortColumn, sortDirection]);
+
+  const selectedVisible = pageTasks.filter((task) =>
     selectedIds.has(task.id)
   ).length;
   const allSelected =
-    sortedTasks.length > 0 && selectedVisible === sortedTasks.length;
+    pageTasks.length > 0 && selectedVisible === pageTasks.length;
   const someSelected = selectedVisible > 0 && !allSelected;
 
   // The indeterminate state cannot be set via JSX, only imperatively.
@@ -104,97 +120,125 @@ export default function TaskTable({
   ];
 
   return (
-    <table className="task-table">
-      <thead>
-        <tr>
-          <th scope="col" className="task-table__checkbox">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              checked={allSelected}
-              onChange={(event) =>
-                onToggleSelectAll(
-                  sortedTasks.map((task) => task.id),
-                  event.target.checked
-                )
-              }
-              aria-label="Select all tasks"
-            />
-          </th>
-          <th scope="col" aria-sort={ariaSort('title')}>
-            <button
-              type="button"
-              className="task-table__sort"
-              onClick={() => toggleSort('title')}
-            >
-              Task
-              <span className="task-table__sort-icon" aria-hidden="true">
-                {sortIcon('title')}
-              </span>
-            </button>
-          </th>
-          <th scope="col">Project</th>
-          {sortableColumns.map(({ key, label }) => (
-            <th key={key} scope="col" aria-sort={ariaSort(key)}>
+    <div className="task-table__wrap">
+      <table className="task-table">
+        <thead>
+          <tr>
+            <th scope="col" className="task-table__checkbox">
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                checked={allSelected}
+                onChange={(event) =>
+                  onToggleSelectAll(
+                    pageTasks.map((task) => task.id),
+                    event.target.checked
+                  )
+                }
+                aria-label="Select all tasks on this page"
+              />
+            </th>
+            <th scope="col" aria-sort={ariaSort('title')}>
               <button
                 type="button"
                 className="task-table__sort"
-                onClick={() => toggleSort(key)}
+                onClick={() => toggleSort('title')}
               >
-                {label}
+                Task
                 <span className="task-table__sort-icon" aria-hidden="true">
-                  {sortIcon(key)}
+                  {sortIcon('title')}
                 </span>
               </button>
             </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {sortedTasks.map((task) => {
-          const project = task.projectId
-            ? projectsById.get(task.projectId)
-            : null;
-          const overdue = task.status !== 'done' && isOverdue(task.dueDate);
-          const selected = selectedIds.has(task.id);
-          return (
-            <tr key={task.id} className={selected ? 'task-table__row--selected' : undefined}>
-              <td className="task-table__checkbox">
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  onChange={() => onToggleSelect(task.id)}
-                  aria-label={`Select ${task.title}`}
-                />
-              </td>
-              <td className="task-table__title">{task.title}</td>
-              <td>
-                {project ? (
-                  <span className="task-table__project">
-                    <span
-                      className="task-table__dot"
-                      style={{ background: project.color }}
-                      aria-hidden="true"
-                    />
-                    {project.name}
+            <th scope="col">Project</th>
+            {sortableColumns.map(({ key, label }) => (
+              <th key={key} scope="col" aria-sort={ariaSort(key)}>
+                <button
+                  type="button"
+                  className="task-table__sort"
+                  onClick={() => toggleSort(key)}
+                >
+                  {label}
+                  <span className="task-table__sort-icon" aria-hidden="true">
+                    {sortIcon(key)}
                   </span>
-                ) : (
-                  <span className="task-table__muted">No project</span>
-                )}
-              </td>
-              <td>
-                <StatusBadge status={task.status} />
-              </td>
-              <td>
-                <PriorityBadge priority={task.priority} />
-              </td>
-              <td className={overdue ? 'task-table__overdue' : undefined}>
-                {formatDate(task.dueDate)}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+                </button>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {pageTasks.map((task) => {
+            const project = task.projectId
+              ? projectsById.get(task.projectId)
+              : null;
+            const overdue = task.status !== 'done' && isOverdue(task.dueDate);
+            const selected = selectedIds.has(task.id);
+            return (
+              <tr
+                key={task.id}
+                className={selected ? 'task-table__row--selected' : undefined}
+              >
+                <td className="task-table__checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() => onToggleSelect(task.id)}
+                    aria-label={`Select ${task.title}`}
+                  />
+                </td>
+                <td className="task-table__title">{task.title}</td>
+                <td>
+                  {project ? (
+                    <span className="task-table__project">
+                      <span
+                        className="task-table__dot"
+                        style={{ background: project.color }}
+                        aria-hidden="true"
+                      />
+                      {project.name}
+                    </span>
+                  ) : (
+                    <span className="task-table__muted">No project</span>
+                  )}
+                </td>
+                <td>
+                  <StatusBadge status={task.status} />
+                </td>
+                <td>
+                  <PriorityBadge priority={task.priority} />
+                </td>
+                <td className={overdue ? 'task-table__overdue' : undefined}>
+                  {formatDate(task.dueDate)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {pageCount > 1 && (
+        <div className="task-table__pagination">
+          <button
+            type="button"
+            className="task-table__page-btn"
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage === 0}
+          >
+            Previous
+          </button>
+          <span className="task-table__page-info" aria-live="polite">
+            Page {currentPage + 1} of {pageCount}
+          </span>
+          <button
+            type="button"
+            className="task-table__page-btn"
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage >= pageCount - 1}
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

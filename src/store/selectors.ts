@@ -30,7 +30,8 @@ export function getTaskStats(tasks: Task[], now = new Date()): TaskStats {
   }
 
   const total = tasks.length;
-  const completionRate = total === 0 ? 0 : Math.round((counts.done / total) * 100);
+  const completionRate =
+    total === 0 ? 0 : Math.round((counts.done / total) * 100);
 
   return {
     total,
