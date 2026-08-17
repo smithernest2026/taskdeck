@@ -10,6 +10,7 @@ interface TaskTableProps {
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: (ids: string[], select: boolean) => void;
+  onEditTask: (task: Task) => void;
   pageSize?: number;
 }
 
@@ -49,6 +50,7 @@ export default function TaskTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  onEditTask,
   pageSize = 6,
 }: TaskTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('dueDate');
@@ -165,6 +167,9 @@ export default function TaskTable({
                 </button>
               </th>
             ))}
+            <th scope="col">
+              <span className="task-table__sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -210,6 +215,15 @@ export default function TaskTable({
                 </td>
                 <td className={overdue ? 'task-table__overdue' : undefined}>
                   {formatDate(task.dueDate)}
+                </td>
+                <td className="task-table__actions">
+                  <button
+                    type="button"
+                    className="task-table__action"
+                    onClick={() => onEditTask(task)}
+                  >
+                    Edit
+                  </button>
                 </td>
               </tr>
             );

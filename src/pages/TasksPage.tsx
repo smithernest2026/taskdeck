@@ -9,6 +9,7 @@ import TaskForm, { type TaskFormValues } from '../components/TaskForm';
 import { useStore } from '../store/StoreContext';
 import { useTaskQuery } from '../hooks/useTaskQuery';
 import { createId } from '../lib/id';
+import type { Task } from '../types';
 import './TasksPage.css';
 
 export default function TasksPage() {
@@ -16,6 +17,7 @@ export default function TasksPage() {
   const { query, setQuery, results, isLoading } = useTaskQuery(state.tasks);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -66,6 +68,15 @@ export default function TasksPage() {
       setIsCreating(false);
     },
     [dispatch]
+  );
+
+  const saveEdit = useCallback(
+    (values: TaskFormValues) => {
+      if (!editingTask) return;
+      dispatch({ type: 'UPDATE_TASK', id: editingTask.id, changes: values });
+      setEditingTask(null);
+    },
+    [editingTask, dispatch]
   );
 
   const countLabel = `${results.length} task${results.length === 1 ? '' : 's'}`;
@@ -123,7 +134,26 @@ export default function TasksPage() {
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
+          onEditTask={setEditingTask}
         />
+      )}
+
+      {editingTask && (
+        <Modal title="Edit task" onClose={() => setEditingTask(null)}>
+          <TaskForm
+            projects={state.projects}
+            initialValues={{
+              title: editingTask.title,
+              status: editingTask.status,
+              priority: editingTask.priority,
+              projectId: editingTask.projectId,
+              dueDate: editingTask.dueDate,
+            }}
+            submitLabel="Save changes"
+            onSubmit={saveEdit}
+            onCancel={() => setEditingTask(null)}
+          />
+        </Modal>
       )}
 
       {isCreating && (
