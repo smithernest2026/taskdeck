@@ -31,6 +31,21 @@
   background: var(--color-bg);
 }
 
+.task-table__checkbox {
+  width: 44px;
+  text-align: center;
+}
+
+.task-table__checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.task-table__row--selected {
+  background: rgba(79, 70, 229, 0.06);
+}
+
 .task-table__sort {
   display: inline-flex;
   align-items: center;

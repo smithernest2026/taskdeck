@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Project, Task, TaskPriority, TaskStatus } from '../types';
 import { PriorityBadge, StatusBadge } from './Badge';
 import { formatDate, isOverdue } from '../lib/date';
@@ -7,6 +7,9 @@ import './TaskTable.css';
 interface TaskTableProps {
   tasks: Task[];
   projects: Project[];
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: (ids: string[], select: boolean) => void;
 }
 
 type SortColumn = 'title' | 'status' | 'priority' | 'dueDate';
@@ -39,9 +42,16 @@ function compare(a: Task, b: Task, column: SortColumn): number {
   }
 }
 
-export default function TaskTable({ tasks, projects }: TaskTableProps) {
+export default function TaskTable({
+  tasks,
+  projects,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+}: TaskTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('dueDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const projectsById = useMemo(() => {
     const map = new Map<string, Project>();
@@ -53,6 +63,20 @@ export default function TaskTable({ tasks, projects }: TaskTableProps) {
     const factor = sortDirection === 'asc' ? 1 : -1;
     return [...tasks].sort((a, b) => compare(a, b, sortColumn) * factor);
   }, [tasks, sortColumn, sortDirection]);
+
+  const selectedVisible = sortedTasks.filter((task) =>
+    selectedIds.has(task.id)
+  ).length;
+  const allSelected =
+    sortedTasks.length > 0 && selectedVisible === sortedTasks.length;
+  const someSelected = selectedVisible > 0 && !allSelected;
+
+  // The indeterminate state cannot be set via JSX, only imperatively.
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
 
   function toggleSort(column: SortColumn) {
     if (column === sortColumn) {
@@ -73,17 +97,30 @@ export default function TaskTable({ tasks, projects }: TaskTableProps) {
     return sortDirection === 'asc' ? '▲' : '▼';
   }
 
-  const columns: { key: SortColumn; label: string; sortable: boolean }[] = [
-    { key: 'title', label: 'Task', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'priority', label: 'Priority', sortable: true },
-    { key: 'dueDate', label: 'Due', sortable: true },
+  const sortableColumns: { key: SortColumn; label: string }[] = [
+    { key: 'status', label: 'Status' },
+    { key: 'priority', label: 'Priority' },
+    { key: 'dueDate', label: 'Due' },
   ];
 
   return (
     <table className="task-table">
       <thead>
         <tr>
+          <th scope="col" className="task-table__checkbox">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={allSelected}
+              onChange={(event) =>
+                onToggleSelectAll(
+                  sortedTasks.map((task) => task.id),
+                  event.target.checked
+                )
+              }
+              aria-label="Select all tasks"
+            />
+          </th>
           <th scope="col" aria-sort={ariaSort('title')}>
             <button
               type="button"
@@ -97,7 +134,7 @@ export default function TaskTable({ tasks, projects }: TaskTableProps) {
             </button>
           </th>
           <th scope="col">Project</th>
-          {columns.slice(1).map(({ key, label }) => (
+          {sortableColumns.map(({ key, label }) => (
             <th key={key} scope="col" aria-sort={ariaSort(key)}>
               <button
                 type="button"
@@ -119,8 +156,17 @@ export default function TaskTable({ tasks, projects }: TaskTableProps) {
             ? projectsById.get(task.projectId)
             : null;
           const overdue = task.status !== 'done' && isOverdue(task.dueDate);
+          const selected = selectedIds.has(task.id);
           return (
-            <tr key={task.id}>
+            <tr key={task.id} className={selected ? 'task-table__row--selected' : undefined}>
+              <td className="task-table__checkbox">
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={() => onToggleSelect(task.id)}
+                  aria-label={`Select ${task.title}`}
+                />
+              </td>
               <td className="task-table__title">{task.title}</td>
               <td>
                 {project ? (

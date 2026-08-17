@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import Header from '../components/Header';
 import TaskTable from '../components/TaskTable';
 import { useStore } from '../store/StoreContext';
@@ -7,6 +8,27 @@ import './TasksPage.css';
 export default function TasksPage() {
   const { state } = useStore();
   const { query, setQuery, results, isLoading } = useTaskQuery(state.tasks);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback((ids: string[], select: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (select) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }, []);
 
   const countLabel = `${results.length} task${results.length === 1 ? '' : 's'}`;
   const statusText = isLoading ? 'Searching…' : countLabel;
@@ -30,7 +52,13 @@ export default function TasksPage() {
         </p>
       </div>
 
-      <TaskTable tasks={results} projects={state.projects} />
+      <TaskTable
+        tasks={results}
+        projects={state.projects}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
+      />
     </>
   );
 }
