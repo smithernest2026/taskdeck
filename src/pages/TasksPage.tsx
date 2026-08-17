@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import Header from '../components/Header';
 import TaskTable from '../components/TaskTable';
 import BulkActionsBar from '../components/BulkActionsBar';
+import EmptyState from '../components/EmptyState';
 import { useStore } from '../store/StoreContext';
 import { useTaskQuery } from '../hooks/useTaskQuery';
 import './TasksPage.css';
@@ -76,13 +77,24 @@ export default function TasksPage() {
         />
       )}
 
-      <TaskTable
-        tasks={results}
-        projects={state.projects}
-        selectedIds={selectedIds}
-        onToggleSelect={toggleSelect}
-        onToggleSelectAll={toggleSelectAll}
-      />
+      {results.length === 0 && !isLoading ? (
+        <EmptyState
+          title={query ? 'No matching tasks' : 'No tasks yet'}
+          description={
+            query
+              ? 'Try a different search term.'
+              : 'Create your first task to get started.'
+          }
+        />
+      ) : (
+        <TaskTable
+          tasks={results}
+          projects={state.projects}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+        />
+      )}
     </>
   );
 }
