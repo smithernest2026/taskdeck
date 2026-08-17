@@ -1,8 +1,24 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { StoreProvider } from './store/StoreContext';
+import Layout from './components/Layout';
+import DashboardPage from './pages/DashboardPage';
+import TasksPage from './pages/TasksPage';
+import ProjectsPage from './pages/ProjectsPage';
+import SettingsPage from './pages/SettingsPage';
+
 export default function App() {
   return (
-    <main>
-      <h1>TaskDeck</h1>
-      <p>Local-first project &amp; task tracker.</p>
-    </main>
+    <StoreProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </StoreProvider>
   );
 }
