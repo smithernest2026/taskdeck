@@ -45,6 +45,15 @@
 
 .task-table__actions {
   text-align: right;
+  white-space: nowrap;
+}
+
+.task-table__action + .task-table__action {
+  margin-left: var(--space-2);
+}
+
+.task-table__action--danger {
+  color: var(--color-danger);
 }
 
 .task-table__action {

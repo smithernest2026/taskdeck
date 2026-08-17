@@ -11,6 +11,7 @@ interface TaskTableProps {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: (ids: string[], select: boolean) => void;
   onEditTask: (task: Task) => void;
+  onDeleteTask: (task: Task) => void;
   pageSize?: number;
 }
 
@@ -51,6 +52,7 @@ export default function TaskTable({
   onToggleSelect,
   onToggleSelectAll,
   onEditTask,
+  onDeleteTask,
   pageSize = 6,
 }: TaskTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('dueDate');
@@ -223,6 +225,13 @@ export default function TaskTable({
                     onClick={() => onEditTask(task)}
                   >
                     Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="task-table__action task-table__action--danger"
+                    onClick={() => onDeleteTask(task)}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>

@@ -6,6 +6,7 @@ import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import TaskForm, { type TaskFormValues } from '../components/TaskForm';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useStore } from '../store/StoreContext';
 import { useTaskQuery } from '../hooks/useTaskQuery';
 import { createId } from '../lib/id';
@@ -18,6 +19,7 @@ export default function TasksPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -79,6 +81,12 @@ export default function TasksPage() {
     [editingTask, dispatch]
   );
 
+  const confirmDelete = useCallback(() => {
+    if (!deletingTask) return;
+    dispatch({ type: 'DELETE_TASKS', ids: [deletingTask.id] });
+    setDeletingTask(null);
+  }, [deletingTask, dispatch]);
+
   const countLabel = `${results.length} task${results.length === 1 ? '' : 's'}`;
   const statusText = isLoading ? 'Searching…' : countLabel;
 
@@ -135,6 +143,17 @@ export default function TasksPage() {
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
           onEditTask={setEditingTask}
+          onDeleteTask={setDeletingTask}
+        />
+      )}
+
+      {deletingTask && (
+        <ConfirmDialog
+          title="Delete task"
+          message={`Delete "${deletingTask.title}"? This cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setDeletingTask(null)}
         />
       )}
 
