@@ -1,0 +1,42 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge--status-todo {
+  background: rgba(101, 109, 118, 0.14);
+  color: var(--color-text-muted);
+}
+
+.badge--status-in-progress {
+  background: rgba(79, 70, 229, 0.14);
+  color: var(--color-primary);
+}
+
+.badge--status-done {
+  background: rgba(18, 128, 92, 0.16);
+  color: var(--color-success);
+}
+
+.badge--priority-low {
+  background: rgba(101, 109, 118, 0.14);
+  color: var(--color-text-muted);
+}
+
+.badge--priority-medium {
+  background: rgba(181, 71, 8, 0.14);
+  color: var(--color-warning);
+}
+
+.badge--priority-high {
+  background: rgba(217, 45, 32, 0.14);
+  color: var(--color-danger);
+}
